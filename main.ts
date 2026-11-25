@@ -4,7 +4,7 @@
 // newline) to /output/entry.txt, so the grader can read one line and
 // nothing else.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,11 +21,20 @@ if (LINE.length < 1 || LINE.length > 200) {
 if (LINE.trim().length === 0) {
   throw new Error("entry must not be blank");
 }
+if (/[\r\n]/.test(LINE)) {
+  throw new Error("entry must be a single line, no line breaks");
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outDir = resolve("/output");
 mkdirSync(outDir, { recursive: true });
-writeFileSync(resolve(outDir, "entry.txt"), LINE, "utf8");
+const outPath = resolve(outDir, "entry.txt");
+writeFileSync(outPath, LINE, "utf8");
+// Read back and confirm the grader will see exactly the line, nothing else.
+const written = readFileSync(outPath, "utf8");
+if (written !== LINE) {
+  throw new Error("entry.txt does not match the validated line");
+}
 console.log(LINE);
 console.log(`chars: ${LINE.length}`);
 void here;
